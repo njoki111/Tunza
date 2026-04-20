@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  ActivityIndicator, // ADD THIS
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -17,31 +18,32 @@ import {
   Clock,
   MessageCircle,
   Calendar,
-  Award ,
+  Award,
   Globe,
   ArrowLeft,
   Heart,
   CheckCircle2,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import { mockCaregivers } from '@/constants/mockData';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useCaregiverDetail } from '../../hooks/useCaregiverDetail';
 
 const { width } = Dimensions.get('window');
 
 export default function CaregiverDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const caregiver = mockCaregivers.find(c => c.id === id);
+  
+  // Your hook returns the caregiver directly (no loading state)
+  const caregiver = useCaregiverDetail(id);
 
+  // Simple loading check (assuming null/undefined means loading)
   if (!caregiver) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Caregiver not found</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButtonError}>
-            <Text style={styles.backButtonErrorText}>Go Back</Text>
-          </TouchableOpacity>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <Text style={styles.loadingText}>Loading caregiver details...</Text>
         </View>
       </SafeAreaView>
     );
@@ -109,7 +111,10 @@ export default function CaregiverDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.bookButton}
-              onPress={() => router.push('/request/new')}
+              onPress={() => router.push({
+                pathname: '/requests/new',
+                params: { caregiverId: caregiver.id }
+              })}
             >
               <Text style={styles.bookButtonText}>Book Now</Text>
             </TouchableOpacity>
@@ -125,12 +130,12 @@ export default function CaregiverDetailScreen() {
           </View>
           <View style={styles.statBox}>
             <Award size={20} color={colors.primary[500]} />
-            <Text style={styles.statValue}>{caregiver.certifications.length}</Text>
+            <Text style={styles.statValue}>{caregiver.certifications?.length || 0}</Text>
             <Text style={styles.statLabel}>Certificates</Text>
           </View>
           <View style={styles.statBox}>
             <Globe size={20} color={colors.primary[500]} />
-            <Text style={styles.statValue}>{caregiver.languages.length}</Text>
+            <Text style={styles.statValue}>{caregiver.languages?.length || 0}</Text>
             <Text style={styles.statLabel}>Languages</Text>
           </View>
         </Animated.View>
@@ -138,60 +143,68 @@ export default function CaregiverDetailScreen() {
         {/* Bio */}
         <Animated.View entering={FadeInUp.delay(300)} style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bioText}>{caregiver.bio}</Text>
+          <Text style={styles.bioText}>{caregiver.bio || 'No bio available'}</Text>
         </Animated.View>
 
         {/* Specialties */}
-        <Animated.View entering={FadeInUp.delay(350)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Specialties</Text>
-          <View style={styles.specialtiesContainer}>
-            {caregiver.specialties.map((specialty, index) => (
-              <View key={index} style={styles.specialtyTag}>
-                <Text style={styles.specialtyText}>{specialty}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+        {caregiver.specialties && caregiver.specialties.length > 0 && (
+          <Animated.View entering={FadeInUp.delay(350)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Specialties</Text>
+            <View style={styles.specialtiesContainer}>
+              {caregiver.specialties.map((specialty: string, index: number) => (
+                <View key={index} style={styles.specialtyTag}>
+                  <Text style={styles.specialtyText}>{specialty}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         {/* Certifications */}
-        <Animated.View entering={FadeInUp.delay(400)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Certifications</Text>
-          <View style={styles.certificationsContainer}>
-            {caregiver.certifications.map((cert, index) => (
-              <View key={index} style={styles.certificationItem}>
-                <Award size={16} color={colors.success.DEFAULT} />
-                <Text style={styles.certificationText}>{cert}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+        {caregiver.certifications && caregiver.certifications.length > 0 && (
+          <Animated.View entering={FadeInUp.delay(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Certifications</Text>
+            <View style={styles.certificationsContainer}>
+              {caregiver.certifications.map((cert: string, index: number) => (
+                <View key={index} style={styles.certificationItem}>
+                  <Award size={16} color={colors.success.DEFAULT} />
+                  <Text style={styles.certificationText}>{cert}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         {/* Languages */}
-        <Animated.View entering={FadeInUp.delay(450)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Languages</Text>
-          <View style={styles.languagesContainer}>
-            {caregiver.languages.map((language, index) => (
-              <View key={index} style={styles.languageTag}>
-                <Globe size={14} color={colors.primary[600]} />
-                <Text style={styles.languageText}>{language}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+        {caregiver.languages && caregiver.languages.length > 0 && (
+          <Animated.View entering={FadeInUp.delay(450)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Languages</Text>
+            <View style={styles.languagesContainer}>
+              {caregiver.languages.map((language: string, index: number) => (
+                <View key={index} style={styles.languageTag}>
+                  <Globe size={14} color={colors.primary[600]} />
+                  <Text style={styles.languageText}>{language}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         {/* Availability */}
-        <Animated.View entering={FadeInUp.delay(500)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
-          <View style={styles.availabilityContainer}>
-            {caregiver.availability.map((slot, index) => (
-              <View key={index} style={styles.availabilityItem}>
-                <Calendar size={16} color={colors.primary[500]} />
-                <Text style={styles.availabilityDay}>{slot.day}</Text>
-                <Text style={styles.availabilityTime}>{slot.startTime} - {slot.endTime}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+        {caregiver.availability && caregiver.availability.length > 0 && (
+          <Animated.View entering={FadeInUp.delay(500)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Availability</Text>
+            <View style={styles.availabilityContainer}>
+              {caregiver.availability.map((slot: any, index: number) => (
+                <View key={index} style={styles.availabilityItem}>
+                  <Calendar size={16} color={colors.primary[500]} />
+                  <Text style={styles.availabilityDay}>{slot.day}</Text>
+                  <Text style={styles.availabilityTime}>{slot.startTime} - {slot.endTime}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -203,6 +216,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.secondary[50],
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.secondary[50],
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.secondary[500],
   },
   errorContainer: {
     flex: 1,

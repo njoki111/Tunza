@@ -1,5 +1,5 @@
 // CareBridge - Caregivers Listing (Production Grade)
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -24,11 +25,10 @@ import {
   Award,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import { mockCaregivers } from '@/constants/mockData';
+import { useCaregivers } from '@/hooks/useCaregivers';
 import { router } from 'expo-router';
-import { Animated } from 'react-native';
 
-const SPECIALTIES = ['All', 'Elderly Care', 'Dementia Care', 'Palliative Care', 'Post-Surgery', 'Alzheimer\'s'];
+const SPECIALTIES = ['All', 'Elderly Care', 'Dementia Care', 'Palliative Care', 'Post-Surgery', "Alzheimer's"];
 
 const FadeInView = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
   const opacity = React.useRef(new Animated.Value(0)).current;
@@ -73,16 +73,28 @@ interface Caregiver {
   backgroundChecked: boolean;
 }
 
-// Extended mock data with trust signals
-const enhancedCaregivers: Caregiver[] = mockCaregivers.map(c => ({
-  ...c,
-  backgroundChecked: true,
-}));
-
 export default function CaregiversScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
-  const [isLoading, setIsLoading] = useState(false);
+  
+ 
+  // Transform data to match your Caregiver interface
+  const enhancedCaregivers: Caregiver[] = useMemo(() => {
+    return (caregivers || []).map((c: any) => ({
+      id: c.id,
+      name: c.name || c.users?.name || 'Unknown',
+      avatar: c.avatar || 'https://via.placeholder.com/64',
+      rating: c.rating || 0,
+      reviewCount: c.review_count || 0,
+      hourlyRate: c.hourly_rate || 0,
+      specialties: c.specialties || [],
+      certifications: c.certifications || [],
+      experience: c.experience_years || 0,
+      location: c.location || 'Unknown',
+      isVerified: c.verified || false,
+      backgroundChecked: c.background_checked || true,
+    }));
+  }, [caregivers]);
 
   const filteredCaregivers = useMemo(() => {
     return enhancedCaregivers.filter(caregiver => {
@@ -92,14 +104,12 @@ export default function CaregiversScreen() {
         caregiver.specialties.some(s => s.includes(selectedSpecialty));
       return matchesSearch && matchesSpecialty;
     });
-  }, [searchQuery, selectedSpecialty]);
+  }, [searchQuery, selectedSpecialty, enhancedCaregivers]);
 
   const handleSpecialtyChange = useCallback((specialty: string) => {
-    setIsLoading(true);
-    setSelectedSpecialty(specialty);
-    // Simulate loading for better UX
-    setTimeout(() => setIsLoading(false), 300);
-  }, []);
+  setSelectedSpecialty(specialty);
+}, []);
+
 
   const renderCaregiver = useCallback(({ item, index }: { item: Caregiver; index: number }) => (
     <FadeInView delay={index * 50}>
@@ -137,7 +147,6 @@ export default function CaregiversScreen() {
 
         <View style={styles.divider} />
 
-        {/* Trust Signals Row */}
         <View style={styles.trustSignals}>
           <View style={styles.trustItem}>
             <CheckCircle2 size={14} color={colors.success.DEFAULT} />
@@ -145,7 +154,7 @@ export default function CaregiversScreen() {
           </View>
           <View style={styles.trustItem}>
             <Award size={14} color={colors.primary[500]} />
-            <Text style={styles.trustText}>{item.certifications[0]}</Text>
+            <Text style={styles.trustText}>{item.certifications[0] || 'Certified'}</Text>
           </View>
         </View>
 
@@ -178,7 +187,7 @@ export default function CaregiversScreen() {
       </View>
       <Text style={styles.emptyTitle}>No caregivers found</Text>
       <Text style={styles.emptySubtitle}>
-        Try adjusting your search or filters to find what you\'re looking for
+        Try adjusting your search or filters to find what you're looking for
       </Text>
       <TouchableOpacity
         style={styles.emptyButton}
@@ -191,6 +200,18 @@ export default function CaregiversScreen() {
       </TouchableOpacity>
     </View>
   );
+
+  // Show loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <Text style={styles.loadingText}>Loading caregivers...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -251,27 +272,19 @@ export default function CaregiversScreen() {
         </Text>
       </View>
 
-      {/* Loading State */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary[600]} />
-          <Text style={styles.loadingText}>Finding caregivers...</Text>
-        </View>
-      ) : (
-        /* Caregivers List */
-        <FlatList
-          data={filteredCaregivers}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCaregiver}
-          contentContainerStyle={[
-            styles.listContent,
-            filteredCaregivers.length === 0 && styles.emptyListContent
-          ]}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-          ListEmptyComponent={EmptyState}
-        />
-      )}
+      {/* Caregivers List */}
+      <FlatList
+        data={filteredCaregivers}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCaregiver}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredCaregivers.length === 0 && styles.emptyListContent
+        ]}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+        ListEmptyComponent={EmptyState}
+      />
     </SafeAreaView>
   );
 }
