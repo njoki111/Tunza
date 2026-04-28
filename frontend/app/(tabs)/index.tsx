@@ -27,6 +27,7 @@ import { colors } from '@/constants/colors';
 import { mockCaregivers, mockRequests, mockUser } from '@/constants/mockData';
 import { router } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
+import { supabase } from "../lib/supabaseClient";
 
 const { width } = Dimensions.get('window');
 

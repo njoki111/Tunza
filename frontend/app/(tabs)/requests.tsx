@@ -21,23 +21,25 @@ import {
   Plus,
 } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
-import { mockRequests } from '@/constants/mockData';
 import { CareRequest } from '@/types/caregiver';
 import { router } from 'expo-router';
 import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
+import { useRequests } from '@/hooks/useRequests'
 
 const TABS = ['All', 'Upcoming', 'Completed', 'Cancelled'] as const;
 
 export default function RequestsScreen() {
   const [activeTab, setActiveTab] = React.useState<typeof TABS[number]>('All');
 
-  const filteredRequests = useMemo(() => {
-    if (activeTab === 'All') return mockRequests;
-    if (activeTab === 'Upcoming') return mockRequests.filter(r => r.status === 'confirmed' || r.status === 'pending');
-    if (activeTab === 'Completed') return mockRequests.filter(r => r.status === 'completed');
-    if (activeTab === 'Cancelled') return mockRequests.filter(r => r.status === 'cancelled');
-    return mockRequests;
-  }, [activeTab]);
+const { data: allRequests = [], isLoading } = useRequests()
+
+const filteredRequests = useMemo(() => {
+  if (activeTab === 'All') return allRequests
+  if (activeTab === 'Upcoming') return allRequests.filter(r => r.status === 'confirmed' || r.status === 'pending')
+  if (activeTab === 'Completed') return allRequests.filter(r => r.status === 'completed')
+  if (activeTab === 'Cancelled') return allRequests.filter(r => r.status === 'cancelled')
+  return allRequests
+}, [activeTab, allRequests])
 
   const getStatusIcon = useCallback((status: string) => {
     switch (status) {

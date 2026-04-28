@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import { colors } from '@/constants/colors';
-
+import { supabase } from "../lib/supabaseClient";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Home, ArrowLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { router } from 'expo-router';
-
+import { supabase } from "../lib/supabaseClient";
 export default function NotFoundScreen() {
   return (
     <>

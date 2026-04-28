@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { Home, Users, ClipboardList, User } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { View, StyleSheet, Platform } from 'react-native';
-
+import { supabase } from "../lib/supabaseClient";
 export default function TabLayout() {
 
   

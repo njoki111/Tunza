@@ -27,6 +27,7 @@ import {
 import { colors } from '@/constants/colors';
 import { useCaregivers } from '@/hooks/useCaregivers';
 import { router } from 'expo-router';
+import { supabase } from "../lib/supabaseClient";
 
 const SPECIALTIES = ['All', 'Elderly Care', 'Dementia Care', 'Palliative Care', 'Post-Surgery', "Alzheimer's"];
 
